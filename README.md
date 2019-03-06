@@ -15,8 +15,11 @@
          super.onCreate(savedInstanceState);
          setContentView(R.layout.activity_main);
          try {
+             //新建链接,设置socketserver地址
              c = new ExampleClient(new URI("ws://121.196.207.174:8001"));
-             c.setHeatBeatLoopTime(30 * 1000).setHeatBeatMsg("KEEPALIVE").setSendEndTag("<EOF>").connect();
+             //心跳包参数设置,信息收发结尾标识设置
+             c.setHeatBeatLoopTime(30 * 1000).setHeatBeatMsg("KEEPALIVE").setMessageEndTag("<EOF>").connect();
+             //连接回调
              c.addCliObserver(new SocketClientObserver() {
                  @Override
                  protected void onOpen(String msg) {
@@ -40,13 +43,14 @@
                      c.reconnect();
                  }
              });
+             //接收信息回调
              c.addMsgObserver(new SocketMsgObserver() {
                  @Override
                  protected void onMsg(String msg) {
                      System.out.println(msg + "==============================");
                  }
              });
- 
+             //发送信息回调
              c.addSendObserver(new SocketSendObserver() {
                  @Override
                  protected void onSendSuccess(String msg) {
@@ -72,5 +76,5 @@
          c.close();
      }
  }
- 
+
  ```

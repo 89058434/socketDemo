@@ -37,7 +37,7 @@ public class ExampleClient extends WebSocketClient {
         return this;
     }
 
-    public ExampleClient setSendEndTag(String endTag) {
+    public ExampleClient setMessageEndTag(String endTag) {
         this.endTag = endTag;
         return this;
     }
