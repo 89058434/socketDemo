@@ -24,6 +24,8 @@ public class ExampleClient extends WebSocketClient {
     private String heartBeatStr = "KEEPALIVE";
     //心跳包的任务
     private HeartBeatTask task;
+    //信息结束标识
+    private String endTag = "<EOF>";
 
     public ExampleClient setHeatBeatLoopTime(int timeMile) {
         HEART_BEAT_DELAY = timeMile;
@@ -32,6 +34,11 @@ public class ExampleClient extends WebSocketClient {
 
     public ExampleClient setHeatBeatMsg(String msg) {
         heartBeatStr = msg;
+        return this;
+    }
+
+    public ExampleClient setSendEndTag(String endTag) {
+        this.endTag = endTag;
         return this;
     }
 
@@ -51,7 +58,26 @@ public class ExampleClient extends WebSocketClient {
             return;
         }
         cliObservable.onOpen(handshakedata.getHttpStatusMessage());
+//        task.startTask();
+    }
+
+    /**
+     * 开启心跳发送
+     */
+    public void startHeartBeat() {
+        if (task == null) {
+            task = new HeartBeatTask();
+        }
         task.startTask();
+    }
+
+    /**
+     * 关闭心跳发送,退出的时候一定要调,否则内存泄漏
+     */
+    public void stopHeartBeat() {
+        if (task != null) {
+            task.stopTask();
+        }
     }
 
     @Override
@@ -59,8 +85,8 @@ public class ExampleClient extends WebSocketClient {
         if (msgObservable == null) {
             return;
         }
-        if (message.endsWith("<EOF>")) {
-            msgObservable.onMessage(message.replaceAll("<EOF>", ""));
+        if (message.endsWith(endTag)) {
+            msgObservable.onMessage(message.replaceAll(endTag, ""));
         }
     }
 
@@ -181,7 +207,7 @@ public class ExampleClient extends WebSocketClient {
         if (sendObservable == null) {
             return;
         }
-        String msg = text + "<EOF>";
+        String msg = text + endTag;
         try {
             super.send(msg);
         } catch (Exception e) {
@@ -189,6 +215,7 @@ public class ExampleClient extends WebSocketClient {
         }
         sendObservable.onMessage(new SocketSendObservable.SocketSendBean().setMsg(text).setType(SocketSendObservable.SEND_SUCCESS));
     }
+
 
     private class HeartBeatTask implements Runnable {
 
@@ -205,6 +232,7 @@ public class ExampleClient extends WebSocketClient {
             if (handler == null) {
                 handler = new Handler();
             }
+            stopTask();
             handler.postDelayed(this, HEART_BEAT_DELAY);
         }
 
